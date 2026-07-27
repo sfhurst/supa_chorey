@@ -35,3 +35,15 @@
 - Added developer menu and time travel.
 - Added person assignment icon.
 - Improved scheduler cleanup.
+
+## 0.7.0 — SupaChorey test build
+
+- Added browser-safe Supabase client configuration.
+- Moved task and occurrence repositories to the shared Supabase tables.
+- Kept profiles, PINs, permissions, daily state, and developer time travel local.
+- Added first-run default-task seeding with read-back confirmation.
+- Added focus refresh and one-minute polling.
+- Added visible connection failure and retry handling.
+- Restricted the Developer menu to the Owner profile.
+- Added Owner-PIN-protected shared default-task reset.
+- Reduced local storage to device-local state only.

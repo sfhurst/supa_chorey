@@ -198,9 +198,16 @@ const ChoreyTaskCreator = (() => {
         timer = window.setTimeout(async () => {
           completed = true;
           timer = null;
-          await taskRepository.delete(original.id);
-          overlay.remove();
-          await onSaved({ deleted: true, taskId: original.id });
+          try {
+            await taskRepository.delete(original.id);
+            overlay.remove();
+            await onSaved({ deleted: true, taskId: original.id });
+          } catch (error) {
+            completed = false;
+            button.classList.remove("holding");
+            console.error("SupaChorey could not delete the task.", error);
+            alert("The task was not deleted. Check the connection and try again.");
+          }
         }, 2000);
       };
       button.addEventListener("pointerdown", beginHold);
@@ -228,9 +235,14 @@ const ChoreyTaskCreator = (() => {
         createdAt: original?.createdAt || new Date().toISOString(),
         active: original?.active !== false,
       };
-      editing ? await taskRepository.update(task) : await taskRepository.add(task);
-      overlay.remove();
-      await onSaved({ deleted: false, taskId: task.id });
+      try {
+        editing ? await taskRepository.update(task) : await taskRepository.add(task);
+        overlay.remove();
+        await onSaved({ deleted: false, taskId: task.id });
+      } catch (error) {
+        console.error("SupaChorey could not save the task.", error);
+        alert("The task was not saved. Check the connection and try again.");
+      }
     }
 
     askName();

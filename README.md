@@ -210,3 +210,42 @@ The static GitHub Pages version is the primary development platform. New ideas s
 Chorey 1 establishes the scheduling engine.
 
 Chorey 2 will enrich the task itself through features such as task notes, default assignments, private tasks, and shared households while preserving the calm, minimal interface.
+
+---
+
+# SupaChorey 0.7.0
+
+SupaChorey keeps Chorey's interface, scheduler, household profiles, PINs, roles,
+and permissions in the static webpage. Supabase is used only for the two pieces
+of state that must be shared across devices:
+
+- task definitions in `tasks`
+- assignment and completion state in `occurrence_states`
+
+The browser-safe connection is created in `supabase.js`. `repositories.js`
+remains the application's storage boundary. `storage.js` now contains only
+local profile, daily congratulations, developer-date, and future display state.
+
+On startup, the app reads the shared task table. A genuinely empty table is
+seeded from the complete hardcoded `defaultTasks` objects and then read back to
+confirm success. A network or permission failure is never treated as an empty
+table.
+
+The app refreshes shared state when it regains focus and once per minute while
+it is open. Supabase Realtime is intentionally deferred until household use
+shows that it is needed.
+
+The Developer menu is available only while Steve/Owner is logged in. Its
+**Reset Default Task List** action requires the Owner PIN and confirmation,
+then clears shared tasks and occurrences, restores the current hardcoded
+factory list, and reads the result back before continuing.
+
+## Supabase browser permissions
+
+This static version does not use Supabase Auth. If the app displays the shared
+connection banner after deployment, run `SUPABASE_SETUP.sql` once in the
+Supabase SQL Editor. The SQL grants the publishable/anonymous browser client
+read and write access to only the two SupaChorey tables.
+
+Household PINs control the interface but are not database authentication. Do
+not place a Supabase secret or service-role key in this project.

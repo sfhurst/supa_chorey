@@ -10,35 +10,77 @@ const ChoreyApp = (() => {
   let activeDayData = null;
   let congratsTriggeredForToday = false;
   let currentView = "today";
+  let refreshInProgress = false;
+  let pollingTimer = null;
+  const POLL_INTERVAL_MS = 60 * 1000;
 
   async function getActivePerson() {
     return getPerson(await profileRepository.getActivePersonId());
   }
 
+  function clearConnectionBanner() {
+    document.querySelector(".connection-banner")?.remove();
+    document.body.classList.remove("shared-unavailable");
+  }
+
+  function showConnectionBanner(message = "SupaChorey could not reach the shared chore list.") {
+    clearConnectionBanner();
+    document.body.classList.add("shared-unavailable");
+    const banner = document.createElement("div");
+    banner.className = "connection-banner";
+    banner.innerHTML = `<span>${escapeHTML(message)}</span><button type="button" class="connection-retry">Retry</button>`;
+    document.querySelector(".container")?.prepend(banner);
+    banner.querySelector(".connection-retry")?.addEventListener("click", () => initApp());
+  }
+
+  async function loadSharedTasks() {
+    let tasks = await taskRepository.getAll();
+    if (tasks.length) return { tasks, wasSeeded: false };
+
+    await taskRepository.seedDefaults(defaultTasks);
+    tasks = await taskRepository.getAll();
+    if (!tasks.length) throw new Error("SupaChorey could not confirm the default task seed.");
+    return { tasks, wasSeeded: true };
+  }
+
   async function initApp() {
-    const activePerson = await getActivePerson();
-    const tasks = await taskRepository.getAll();
-    activeDayData = ChoreyScheduler.buildDayData(tasks, activePerson, ChoreyClock.now());
+    if (refreshInProgress) return;
+    refreshInProgress = true;
+    try {
+      const activePerson = await getActivePerson();
+      const { tasks, wasSeeded } = await loadSharedTasks();
+      activeDayData = ChoreyScheduler.buildDayData(tasks, activePerson, ChoreyClock.now());
 
-    document.getElementById("date-subheading").textContent = activeDayData.displayDate;
-    await dailyRepository.prepare(activeDayData.dateKey);
-    congratsTriggeredForToday = await dailyRepository.getCongratulationsShown();
+      clearConnectionBanner();
+      document.getElementById("date-subheading").textContent = activeDayData.displayDate;
+      await dailyRepository.prepare(activeDayData.dateKey);
+      congratsTriggeredForToday = await dailyRepository.getCongratulationsShown();
 
-    ChoreyUI.updateHeader(activePerson, async () => {
-      await ChoreyTaskCreator.open(await getActivePerson(), refreshCurrentView);
-    }, { title: currentView === "all" ? "All Tasks" : undefined });
+      ChoreyUI.updateHeader(activePerson, async () => {
+        await ChoreyTaskCreator.open(await getActivePerson(), refreshCurrentView);
+      }, { title: currentView === "all" ? "All Tasks" : undefined });
 
-    if (!activePerson) {
-      currentView = "today";
-      await profileRepository.clearActivePerson();
-      renderLoginScreen();
-      return;
-    }
+      if (!activePerson) {
+        currentView = "today";
+        await profileRepository.clearActivePerson();
+        renderLoginScreen();
+        return;
+      }
 
-    if (currentView === "all" && activePerson.isOwner) await renderAllTasks();
-    else {
-      currentView = "today";
-      await renderView();
+      if (currentView === "all" && activePerson.isOwner) await renderAllTasks();
+      else {
+        currentView = "today";
+        await renderView({ skipSharedState: wasSeeded });
+      }
+    } catch (error) {
+      console.error("SupaChorey could not refresh.", error);
+      showConnectionBanner("Shared chores are unavailable. Check the connection and try again.");
+      const viewport = document.getElementById("app-viewport");
+      if (!viewport.innerHTML.trim()) {
+        viewport.innerHTML = `<div class="connection-empty"><strong>Shared chores unavailable</strong><span>Your profile and local settings are safe. Shared actions are paused until Supabase reconnects.</span></div>`;
+      }
+    } finally {
+      refreshInProgress = false;
     }
   }
 
@@ -59,31 +101,16 @@ const ChoreyApp = (() => {
     });
   }
 
-  async function mergeLegacyStates(states) {
-    const legacy = await occurrenceRepository.getLegacyDailyStates();
-    let changed = false;
-    activeDayData.occurrences.forEach(item => {
-      if (states[item.id]) return;
-      const oldId = ChoreyScheduler.legacyStateId(item.task, item.occurrence);
-      if (oldId && legacy[oldId]) {
-        states[item.id] = legacy[oldId];
-        changed = true;
-      }
-    });
-    if (changed) {
-      for (const [id, state] of Object.entries(states)) await occurrenceRepository.set(id, state);
-      await occurrenceRepository.clearLegacyDailyStates();
-    }
-    return states;
-  }
 
-  async function renderView() {
+  async function renderView({ skipSharedState = false } = {}) {
     const viewport = document.getElementById("app-viewport");
     const activePerson = await getActivePerson();
     if (!activePerson) return renderLoginScreen();
     document.getElementById("date-subheading").textContent = activeDayData.displayDate;
 
-    await occurrenceRepository.prune(activeDayData.occurrences.map(item => item.id));
+    if (!skipSharedState) {
+      await occurrenceRepository.prune(activeDayData.occurrences.map(item => item.id));
+    }
 
     if (!activeDayData.occurrences.length) {
       ChoreyUI.renderEmptyDay(activePerson);
@@ -91,7 +118,7 @@ const ChoreyApp = (() => {
       return;
     }
 
-    const states = await mergeLegacyStates(await occurrenceRepository.getAll());
+    const states = skipSharedState ? {} : await occurrenceRepository.getAll();
     const sections = new Map([["unassigned", []], ...people.map(person => [person.id, []])]);
 
     activeDayData.occurrences.forEach(item => {
@@ -120,13 +147,27 @@ const ChoreyApp = (() => {
     viewport.querySelectorAll(".chore-item[data-id]").forEach(row => {
       row.querySelector(".assignment-button")?.addEventListener("click", async event => {
         event.stopPropagation();
-        await handleAssignmentControl(row.dataset.id);
+        try {
+          await handleAssignmentControl(row.dataset.id);
+          clearConnectionBanner();
+        } catch (error) {
+          console.error("SupaChorey could not change the assignment.", error);
+          showConnectionBanner("The assignment was not changed. Check the connection and retry.");
+        }
       });
 
       const checkbox = row.querySelector(".chore-checkbox");
       checkbox?.addEventListener("click", event => event.stopPropagation());
       checkbox?.addEventListener("change", async event => {
-        if (!await toggleCompletion(row.dataset.id, event.target.checked)) event.target.checked = !event.target.checked;
+        const requested = event.target.checked;
+        try {
+          if (!await toggleCompletion(row.dataset.id, requested)) event.target.checked = !requested;
+          else clearConnectionBanner();
+        } catch (error) {
+          event.target.checked = !requested;
+          console.error("SupaChorey could not change task completion.", error);
+          showConnectionBanner("The completion was not changed. Check the connection and retry.");
+        }
       });
     });
 
@@ -207,26 +248,32 @@ const ChoreyApp = (() => {
     document.body.appendChild(overlay);
 
     overlay.querySelectorAll("[data-assign]").forEach(row => row.addEventListener("click", async () => {
-      const states = await occurrenceRepository.getAll();
-      const current = states[id] || {};
-      const target = row.dataset.assign || null;
-      if (target) {
-        states[id] = {
-          ...current,
-          assignedToId: target,
-          isDone: false,
-          completedById: null,
-          assignedByAdmin: true,
-          assignedById: active.id,
-          assignedByCompletion: false,
-        };
-      } else {
-        delete states[id];
+      try {
+        const states = await occurrenceRepository.getAll();
+        const current = states[id] || {};
+        const target = row.dataset.assign || null;
+        if (target) {
+          states[id] = {
+            ...current,
+            assignedToId: target,
+            isDone: false,
+            completedById: null,
+            assignedByAdmin: true,
+            assignedById: active.id,
+            assignedByCompletion: false,
+          };
+        } else {
+          delete states[id];
+        }
+        if (states[id]) await occurrenceRepository.set(id, states[id]);
+        else await occurrenceRepository.delete(id);
+        overlay.remove();
+        clearConnectionBanner();
+        await renderView();
+      } catch (error) {
+        console.error("SupaChorey could not change the assignment.", error);
+        showConnectionBanner("The assignment was not changed. Check the connection and retry.");
       }
-      if (states[id]) await occurrenceRepository.set(id, states[id]);
-      else await occurrenceRepository.delete(id);
-      overlay.remove();
-      await renderView();
     }));
     overlay.querySelector(".modal-cancel").addEventListener("click", () => overlay.remove());
   }
@@ -299,7 +346,9 @@ const ChoreyApp = (() => {
     dateHoldTimer = null;
   }
 
-  function openDeveloperMenu() {
+  async function openDeveloperMenu() {
+    const active = await getActivePerson();
+    if (!active?.isOwner) return;
     document.querySelector(".developer-overlay")?.remove();
     const overlay = document.createElement("div");
     overlay.className = "developer-overlay";
@@ -309,7 +358,8 @@ const ChoreyApp = (() => {
         <div class="developer-modal-title">Developer</div>
         <div class="developer-version">Chorey v${escapeHTML(CHOREY_APP_VERSION)}</div>
         <div class="developer-date-status">Scheduler date: ${escapeHTML(simulated)}</div>
-        <button class="developer-menu-button danger" data-dev-action="reset">Reset Local Data</button>
+        <button class="developer-menu-button danger" data-dev-action="reset-shared">Reset Default Task List</button>
+        <button class="developer-menu-button danger" data-dev-action="reset-local">Reset Local Data</button>
         <div class="developer-menu-label">Time Travel</div>
         <button class="developer-menu-button" data-dev-action="tomorrow">Tomorrow</button>
         <button class="developer-menu-button" data-dev-action="week">Next Week</button>
@@ -323,10 +373,28 @@ const ChoreyApp = (() => {
       const action = event.target.closest("[data-dev-action]")?.dataset.devAction;
       if (!action) { if (event.target === overlay) overlay.remove(); return; }
       if (action === "cancel") { overlay.remove(); return; }
-      if (action === "reset") {
-        if (!confirm("Reset all local Chorey data and restore the hardcoded defaults?")) return;
+      if (action === "reset-local") {
+        if (!confirm("Reset this device's local Chorey settings? Shared tasks and completions will not be changed.")) return;
         ChoreyStorage.resetAllData();
         location.reload();
+        return;
+      }
+      if (action === "reset-shared") {
+        const owner = await getActivePerson();
+        if (!owner?.isOwner) { overlay.remove(); return; }
+        const passcode = prompt("Enter the Owner passcode to reset the shared task list:");
+        if (passcode === null) return;
+        if (passcode !== owner.passcode) { alert("Incorrect Owner passcode."); return; }
+        if (!confirm("Reset the shared task list to the current hardcoded defaults? This permanently deletes every shared task, assignment, and completion.")) return;
+        try {
+          await taskRepository.resetToDefaults(defaultTasks);
+          overlay.remove();
+          currentView = "today";
+          await initApp();
+        } catch (error) {
+          console.error("SupaChorey could not reset the shared task list.", error);
+          showConnectionBanner("The shared task reset did not finish. Retry after checking the connection.");
+        }
         return;
       }
       if (action === "tomorrow") ChoreyClock.advanceDays(1);
@@ -339,8 +407,10 @@ const ChoreyApp = (() => {
     });
   }
 
-  dateSubheading.addEventListener("pointerdown", event => {
+  dateSubheading.addEventListener("pointerdown", async event => {
     if (event.button !== undefined && event.button !== 0) return;
+    const active = await getActivePerson();
+    if (!active?.isOwner) return;
     dateLongPressTriggered = false;
     clearDateHold();
     dateHoldTimer = window.setTimeout(() => {
@@ -362,19 +432,23 @@ const ChoreyApp = (() => {
   });
 
 
-  const INACTIVITY_REFRESH_MS = 15 * 60 * 1000;
-  let hiddenAt = null;
-  document.addEventListener("visibilitychange", async () => {
-    if (document.hidden) { hiddenAt = Date.now(); return; }
-    const inactiveLongEnough = hiddenAt !== null && Date.now() - hiddenAt >= INACTIVITY_REFRESH_MS;
-    hiddenAt = null;
-    if (inactiveLongEnough && activeDayData?.dateKey !== ChoreyUtils.dateKey(ChoreyClock.now())) await initApp();
+  function canBackgroundRefresh() {
+    return !document.hidden && !document.querySelector(".assignment-overlay, .developer-overlay");
+  }
+
+  async function refreshFromSharedState() {
+    if (!canBackgroundRefresh()) return;
+    await initApp();
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) refreshFromSharedState();
   });
+  window.addEventListener("focus", refreshFromSharedState);
+
+  pollingTimer = window.setInterval(refreshFromSharedState, POLL_INTERVAL_MS);
 
   return Object.freeze({ init: initApp });
 })();
 
-ChoreyApp.init().catch(error => {
-  console.error("Chorey could not start.", error);
-  alert("Chorey could not start. Reload the page and try again.");
-});
+ChoreyApp.init();

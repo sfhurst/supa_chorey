@@ -11,8 +11,8 @@ const people = [
 // ==========================================
 // DEFAULT TASK OBJECTS
 // ==========================================
-// These seed a new installation and are copied into local storage. After that,
-// local storage is the working task database until Supabase is introduced.
+// These seed an empty Supabase task table and restore the shared task library
+// when the Owner chooses Reset Default Task List. Supabase stores the working copy.
 //
 // Edit these objects directly when changing the built-in chore list. Categories,
 // schedules, and stable IDs are explicit; no legacy string conversion runs here.
