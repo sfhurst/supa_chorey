@@ -1,10 +1,10 @@
 // ==========================================
-// CHOREY LOCAL STORAGE — SCHEMA VERSION 7
+// CHOREY LOCAL STORAGE — SCHEMA VERSION 8
 // ==========================================
 // This is the only file that may access localStorage. Shared tasks and current
 // occurrence state live in Supabase. This file preserves device-local state.
 const ChoreyStorage = (() => {
-  const CURRENT_SCHEMA_VERSION = 7;
+  const CURRENT_SCHEMA_VERSION = 8;
   const ROOT_STORAGE_KEY = "chorey_app_state";
   const LEGACY_KEYS = {
     activePerson: ["chorey_active_person", "family_active_user"],

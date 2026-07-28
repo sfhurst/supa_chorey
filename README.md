@@ -1,251 +1,54 @@
-# Chorey
+# Chorey 0.8.0
 
-**A calm household chore planner that helps without hurting.**
+Chorey is a Supabase-backed household task manager built around one idea: **help, never hurt**.
 
-Chorey was built for a busy household where both parents work full time, kids have sports, the house gets messy, and there is always something competing for attention. It turns a permanent chore schedule into a simple list for the day, week, and month so the user does not have to remember everything at once.
+## This release
 
-The app is especially useful for an attention pattern where a person starts toward one chore, gets distracted, and forgets what they intended to do. Chorey keeps the next useful action close at hand. Open the phone, see the list, remember the task, and continue.
+- Creator ownership for every task
+- Owner, Admin, and User editing permissions
+- Permanent Visible or Private task visibility
+- Private lock UI with no assignment controls
+- Temporary and permanent single-person assignment
+- Shared multi-person assignment with one completion record
+- `defaultAssignedIds[]` task schema
+- Indefinite tasks that remain until completed
+- Automatic migration from legacy assignment and visibility fields
+- Private migration for Steve's Shower and Groom tasks
+- Background refresh without clearing the current screen first
+- Supabase-first completion writes
+- Optional nightly cleanup SQL
+- iPhone task-form and swipe-action fixes
+- Full-category color assignment
 
-## Philosophy
+## Assignment controls
 
-Chorey exists to reduce mental load. It is meant to help and never meant to hurt.
+Owner and Admin:
 
-Most task systems preserve yesterday's failures as today's debt. Chorey does not. If a task is missed, the app moves on. The task returns the next time its schedule naturally cycles around. There are no overdue piles, broken streaks, points, penalties, or guilt.
+- Tap a person for a temporary assignment.
+- Long-press a person for a permanent assignment.
+- Tap **Shared**, select multiple people, then tap **Confirm** for temporary assignment.
+- Long-press **Confirm** for permanent shared assignment.
 
-Chorey says:
+Users may self-assign an unassigned task and may undo only their own temporary self-assignment.
 
-> Today is today. Here is what can be done now.
+## Task ownership
 
-Week-long and month-long work remains visible without demanding immediate attention. A quiet due counter shows the available runway, but the interface does not turn that information into pressure.
+The creator owns the task definition. The Owner may edit or delete any task. Admins and Users may edit or delete tasks they created. Assignment management is available to Owner and Admin.
 
-## Design principles
+## Private tasks
 
-- **Help without hurting.** Every feature should reduce stress or remove something the user must remember.
-- **Start with today.** Day-long tasks are the primary checklist. Yesterday is not carried forward as debt.
-- **Let schedules rebuild the list.** Tasks return automatically when their natural recurrence comes around.
-- **Keep longer work calm.** Week-long and month-long tasks remain visible with quiet deadlines rather than urgent warnings.
-- **Avoid guilt mechanics.** No streaks, overdue counters, points, rewards, or productivity scores.
-- **Prefer obvious interactions.** A checkbox completes, an assignment control assigns, and task editing belongs to the owner.
-- **Keep the scheduler authoritative.** Scheduling decisions belong in one place so the interface can stay simple.
-- **Protect simplicity.** A feature that adds more management than help probably does not belong.
+Private tasks are visible only to their creator, never show an assignment icon, and cannot become visible later. Visible tasks likewise cannot become private later. Delete and recreate a task to change visibility.
 
-## How scheduling works
+## Supabase setup
 
-Task definitions use four recurrence types:
+Run `SUPABASE_SETUP.sql` in the Supabase SQL Editor. The final commented `cron.schedule` statement can be enabled after confirming `pg_cron` is available.
 
-- `once` — occurs on one specific date
-- `days` — occurs on selected days of the week
-- `weeks` — occurs during selected Saturday-anchored weeks of the month
-- `months` — remains available during selected months
+## Files
 
-The scheduler converts those recurrence rules into three occurrence durations:
-
-- **Day-long** — shown for one day
-- **Week-long** — shown Monday through Sunday, using Saturday as the recurrence anchor
-- **Month-long** — shown for the full calendar month
-
-The normal list assumes day-long work needs no heading. Longer work is shown under **This Week** and **This Month**, with a quiet countdown such as `Due: 5 days`, `Due: Tomorrow`, or `Due: Today`.
-
-The congratulations message is based on what is due today:
-
-- Day-long tasks count every day they appear.
-- Week-long tasks count on Sunday, the final day of their window.
-- Month-long tasks count on the final day of the month.
-
-This allows the user to finish today's work without a large monthly task blocking that sense of completion all month.
-
-
-## Identity and versioning
-
-Chorey uses a minimal house-and-checkmark mark. The checkmark forms the left slope of the roof, combining household awareness and task attention in one simple shape. Browser favicons use the mark on a transparent background; Apple touch and Android/PWA icons place the same mark on a quiet rounded tile for reliable home-screen display.
-
-The application release is currently **v0.6.1**. Application version and storage schema version are intentionally separate:
-
-- **App version** changes when Chorey code, design, documentation, or behavior changes.
-- **Storage schema version** changes only when the saved-data structure requires migration.
-
-Static CSS and JavaScript references include the app version as a cache-busting query string. This helps browsers fetch new GitHub Pages releases without clearing Chorey's local task data. Reset Local Data still resets saved Chorey data; it is not a browser-cache command.
-
-## Current architecture
-
-Chorey is a static JavaScript application designed to remain usable throughout development.
-
-- `chore_list.js` contains people and canonical default task objects.
-- `scheduler.js` determines task visibility, occurrence duration, and closing dates.
-- `repositories.js` provides asynchronous storage interfaces.
-- `storage.js` currently stores one consolidated application record in `localStorage`.
-- `ui.js` renders the checklist and task-management views.
-- `task-creator.js` handles task creation and editing.
-- `swipe.js` handles swipe-to-edit interactions.
-- `app.js` coordinates the application.
-
-The repository boundary is intended to make a later move from local storage to Supabase affect as little of the static application as possible. The existing static version can remain available while synchronization is developed and tested separately.
-
-## Default tasks and live data
-
-`defaultTasks` seeds a fresh installation. Once initialized, the browser's stored record becomes the live database. Editing `chore_list.js` does not overwrite existing local tasks automatically. During development, a fresh seed can be loaded with:
-
-```js
-localStorage.removeItem("chorey_app_state");
-location.reload();
-```
-
-This deletes locally created tasks, assignments, and completion state, so it should be used deliberately.
-
-## Direction
-
-The planned technical direction is:
-
-1. Keep the current static version stable and usable.
-2. Move the project into GitHub with versioned development.
-3. Replace the local repository implementation with Supabase synchronization.
-4. Verify reliable laptop and phone use.
-5. Add installable PWA behavior and offline loading.
-
-Future features are welcome, but the philosophy remains the test:
-
-> If a feature makes Chorey feel heavier, more complicated, or more stressful, it probably does not belong.
-
-## Current-cycle storage
-
-Chorey is a current-cycle checklist, not a history tracker.
-
-- A day-long occurrence exists only for its scheduled calendar day.
-- A week-long occurrence exists only for its Monday-through-Sunday window. The Saturday inside that window determines which numbered week and month it belongs to.
-- A month-long occurrence exists only for its scheduled calendar month.
-- Seasonal scheduling is only a month filter on day-long and week-long recurrence. Month-long tasks already select the months in which they occur.
-- Completion and temporary assignment state are physically removed when their occurrence is no longer active.
-- No streaks, missed-day records, completion history, scores, or archived occurrences are retained.
-
-A task may include `defaultAssigneeId`. It is currently `null` for the built-in list, but a hardcoded task can name a household member as its initial assignee. Broader personal/private-task behavior is intentionally deferred until the Supabase phase.
-
-When Chorey stays actively open across midnight, it does not interrupt the user. If it is hidden for at least 15 minutes and reopened on a new date, the current schedule is rebuilt and expired state is cleaned up. A normal reload always loads the current date.
-
-## Hardening changes
-
-The static GitHub Pages version now includes:
-
-- schema version 5 with sequential migration steps
-- occurrence-level repository writes instead of application-level whole-state replacement
-- physical cleanup of expired occurrence state
-- explicit storage-write failures rather than silent success
-- a future-ready `defaultAssigneeId` field
-- inactive-after-midnight refresh behavior
-- scheduler regression tests in `tests/scheduler.test.js`
-
-Run the scheduler tests with:
-
-```bash
-node tests/scheduler.test.js
-```
-
-
-## Hidden developer menu
-
-Long-press the date for one second to open the local developer menu. A normal tap still returns to profile selection. The menu can reset local data, advance the scheduler by one day, one week, or one calendar month, and return to the real current date. The simulated date is stored locally and survives reloads until it is cleared. Reset Local Data removes all Chorey browser data and restores the hardcoded defaults.
-
-### Assignment indicator
-
-The person icon on a task is both an assignment control and a status indicator. It is neutral when the task is unassigned and uses the assigned household member's color when assigned.
-
-
----
-
-# Design Philosophy
-
-> **A calm home is built through consistent awareness, not perfect completion.**
-
-## Completion means appropriate attention
-
-A completed task means the task received appropriate attention, not necessarily that physical work was performed.
-
-If the garbage is already empty, checking that it does not need to be taken out is a successful completion. If the refrigerator is already clean enough, noticing that is success. Chorey reminds you to pay attention, not to perform unnecessary work.
-
-## The app forgets on purpose
-
-Chorey intentionally remembers only the current cycle.
-
-- Daily tasks exist today.
-- Weekly tasks exist this week.
-- Monthly tasks exist this month.
-
-When a cycle ends, its completion data is discarded. There are no overdue chores, missed-day penalties, streaks, or guilt metrics. Every cycle begins fresh.
-
-## Simplicity over flexibility
-
-Whenever possible, Chorey chooses the simplest rule that solves the real problem. Features are added only after repeated real-world need, not because they are theoretically possible.
-
-"As needed" is implied throughout the application.
-
-## Progressive disclosure
-
-Advanced features should remain hidden until intentionally requested.
-
-Examples include:
-- Long-press the date for Developer Tools.
-- Long-press a task (planned) to reveal notes.
-- Swipe within expanded notes (planned) to edit.
-
-The interface should remain calm and uncluttered.
-
-## Information expands naturally
-
-Information belongs to the task it describes. Rather than opening separate screens, tasks should gently expand to reveal additional information while keeping the user in context.
-
-## Every control communicates state
-
-Controls should communicate their current state whenever possible.
-
-- Checkbox = completion state.
-- Person icon = assignment state.
-- Gray person = unassigned.
-- Colored person = assigned household member.
-
-## Development philosophy
-
-The static GitHub Pages version is the primary development platform. New ideas should prove themselves there before moving to Supabase. Cloud synchronization should replace the storage layer—not the philosophy.
-
-## Chorey 2
-
-Chorey 1 establishes the scheduling engine.
-
-Chorey 2 will enrich the task itself through features such as task notes, default assignments, private tasks, and shared households while preserving the calm, minimal interface.
-
----
-
-# SupaChorey 0.7.0
-
-SupaChorey keeps Chorey's interface, scheduler, household profiles, PINs, roles,
-and permissions in the static webpage. Supabase is used only for the two pieces
-of state that must be shared across devices:
-
-- task definitions in `tasks`
-- assignment and completion state in `occurrence_states`
-
-The browser-safe connection is created in `supabase.js`. `repositories.js`
-remains the application's storage boundary. `storage.js` now contains only
-local profile, daily congratulations, developer-date, and future display state.
-
-On startup, the app reads the shared task table. A genuinely empty table is
-seeded from the complete hardcoded `defaultTasks` objects and then read back to
-confirm success. A network or permission failure is never treated as an empty
-table.
-
-The app refreshes shared state when it regains focus and once per minute while
-it is open. Supabase Realtime is intentionally deferred until household use
-shows that it is needed.
-
-The Developer menu is available only while Steve/Owner is logged in. Its
-**Reset Default Task List** action requires the Owner PIN and confirmation,
-then clears shared tasks and occurrences, restores the current hardcoded
-factory list, and reads the result back before continuing.
-
-## Supabase browser permissions
-
-This static version does not use Supabase Auth. If the app displays the shared
-connection banner after deployment, run `SUPABASE_SETUP.sql` once in the
-Supabase SQL Editor. The SQL grants the publishable/anonymous browser client
-read and write access to only the two SupaChorey tables.
-
-Household PINs control the interface but are not database authentication. Do
-not place a Supabase secret or service-role key in this project.
+- `scheduler.js` — recurrence and visibility windows
+- `task-model.js` — schema normalization, migration, and permissions
+- `repositories.js` — Supabase boundary
+- `app.js` — application behavior
+- `ui.js` — rendering
+- `task-creator.js` — task creation and editing
+- `PHILOSOPHY.md` — product principles

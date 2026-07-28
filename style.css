@@ -661,3 +661,4 @@ h1 {
   pointer-events: auto;
   opacity: 1;
 }
+.privacy-lock{margin-left:auto;font-size:1rem;opacity:.75}.shared-count{position:absolute;right:-4px;top:-4px;min-width:16px;height:16px;border-radius:9px;background:#eee;color:#111;font-size:10px;display:grid;place-items:center;font-weight:700}.assignment-button{position:relative}.creator-note{font-size:.82rem;line-height:1.35;opacity:.72;margin:12px 2px}.current-selection{outline:2px solid var(--person-accent,#3a9ad9);outline-offset:-2px}

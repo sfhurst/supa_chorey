@@ -1,2 +1,1 @@
-/* Application release version. This changes independently of the storage schema. */
-const CHOREY_APP_VERSION = "0.7.0";
+const CHOREY_APP_VERSION = "0.8.0";
