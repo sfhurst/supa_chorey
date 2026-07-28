@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.4
+
+### Fixed
+- Restored task sorting within each section to completion status first, then category A–Z, then task name A–Z.
+- Prevented focus, visibility, and polling refreshes from replacing an unchanged task board, eliminating the page vanish/reappear effect.
+- Prevented unchanged background refreshes from visually reshuffling task rows.
+- Excluded private tasks from the daily congratulations calculation; indefinite tasks remain excluded because they are never due.
+
 ## v0.8.3
 
 ### Fixed

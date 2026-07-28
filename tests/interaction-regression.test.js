@@ -14,3 +14,11 @@ assert(css.includes('@keyframes holdAssignFill'));
 assert(css.includes('#task-name-form'));
 assert(css.includes('gap: 14px'));
 console.log('Interaction regression tests passed.');
+
+// Background refresh must preserve the existing task board when its rendered markup is unchanged.
+const appSource=fs.readFileSync('app.js','utf8');
+assert(appSource.includes("lastViewportView==='today'&&lastViewportMarkup===markup"));
+assert(appSource.includes("lastViewportView==='all'&&lastViewportMarkup===markup"));
+
+// Congratulations only considers non-private tasks that are actually due today.
+assert(appSource.includes("i.task.visibility!=='private'&&(i.occurrence.duration==='day'||i.occurrence.closesOn===activeDayData.dateKey)"));
