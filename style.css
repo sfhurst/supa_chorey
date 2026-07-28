@@ -716,3 +716,15 @@ input,textarea{user-select:text;-webkit-user-select:text;}
   from { width: 0; }
   to { width: 100%; }
 }
+
+
+/* v0.8.3 task editor spacing */
+#task-name-form {
+  display: grid;
+  gap: 14px;
+}
+
+#task-name-form .field-label {
+  display: grid;
+  gap: 8px;
+}

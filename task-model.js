@@ -16,12 +16,21 @@ const ChoreyTaskModel = (() => {
   function normalizeTask(input) {
     const task = clone(input || {});
     const legacyDefault = task.defaultAssigneeId ? [task.defaultAssigneeId] : [];
+    const builtInDefault = typeof defaultTasks !== "undefined"
+      ? defaultTasks.find(defaultTask => defaultTask.id === task.id)
+      : null;
+    const shouldUpgradeBuiltInAssignment = Boolean(builtInDefault && task.builtInAssignmentVersion !== 1);
     const normalized = {
       ...task,
       createdById: people.some(person => person.id === task.createdById) ? task.createdById : "person-001",
       visibility: normalizeVisibility(task),
-      defaultAssignedIds: uniquePeople(task.defaultAssignedIds || legacyDefault),
+      defaultAssignedIds: uniquePeople(
+        shouldUpgradeBuiltInAssignment
+          ? builtInDefault.defaultAssignedIds
+          : (task.defaultAssignedIds || legacyDefault)
+      ),
       active: task.active !== false,
+      ...(builtInDefault ? { builtInAssignmentVersion: 1 } : {}),
     };
     delete normalized.defaultAssigneeId;
     if (normalized.visibility === "private") normalized.defaultAssignedIds = [normalized.createdById];

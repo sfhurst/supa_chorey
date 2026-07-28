@@ -71,6 +71,7 @@ const ChoreyRepositories = (() => {
       return true;
     },
     async delete(id) { await requireSuccess(client.from("occurrence_states").delete().eq("id", String(id)), "remove the task state"); return true; },
+    async resetAll() { await requireSuccess(client.from("occurrence_states").delete().not("id", "is", null), "reset current task state"); return true; },
     async prune(validIds) {
       const rows = await requireSuccess(client.from("occurrence_states").select("id"), "check expired task state");
       const valid = new Set(validIds.map(String));

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.3
+
+### Fixed
+- Reset Local Data now clears current occurrence state, unchecking tasks and removing temporary assignments before reloading.
+- Built-in tasks receive their coded default assignment once during migration: normally Unassigned, with Shower and Groom remaining private and assigned to Steve.
+- User-created tasks still begin assigned to their creator.
+- Added uniform spacing between the task-name field and Continue button.
+
 ## v0.8.2
 
 ### Fixed
