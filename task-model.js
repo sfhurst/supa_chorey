@@ -24,7 +24,7 @@ const ChoreyTaskModel = (() => {
       active: task.active !== false,
     };
     delete normalized.defaultAssigneeId;
-    if (normalized.visibility === "private") normalized.defaultAssignedIds = [];
+    if (normalized.visibility === "private") normalized.defaultAssignedIds = [normalized.createdById];
     if (!normalized.schedule || typeof normalized.schedule !== "object") {
       normalized.schedule = { type: "indefinite", date: null, days: [], week: null, months: [] };
     }
@@ -41,7 +41,7 @@ const ChoreyTaskModel = (() => {
   function normalizeOccurrence(input, task) {
     const state = clone(input || {});
     const legacyAssigned = state.assignedToId ? [state.assignedToId] : [];
-    const defaults = task?.visibility === "private" ? [] : task?.defaultAssignedIds || [];
+    const defaults = task?.visibility === "private" ? [task.createdById] : task?.defaultAssignedIds || [];
     const assignedIds = uniquePeople(state.assignedIds || legacyAssigned || defaults);
     const normalized = {
       ...state,
@@ -56,7 +56,7 @@ const ChoreyTaskModel = (() => {
     delete normalized.assignedToId;
     delete normalized.assignedByAdmin;
     delete normalized.assignedByCompletion;
-    if (task?.visibility === "private") normalized.assignedIds = [];
+    if (task?.visibility === "private") { normalized.assignedIds = [task.createdById]; normalized.selfAssignedIds = []; }
     return normalized;
   }
 

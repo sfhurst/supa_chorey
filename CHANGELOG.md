@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.8.1
+
+### Fixed
+- Restored the original button-based Developer menu.
+- Private tasks are permanently assigned to their creator and cannot be unassigned.
+- Shower and Sunday Groom migrate as Steve's private assigned tasks.
+- Newly created tasks default to their creator.
+- Restored a cleaner swipe interaction and first-tap Edit action.
+- Moved Shared Task below Cancel and made its selected state explicit.
+- Moved Private Task below Cancel on the How Often screen.
+- Disabled text selection throughout the app while preserving text inputs.
+
 ## 0.8.0 — Combined ownership, privacy, sharing, and scheduler milestone
 
 ### Features
