@@ -1,0 +1,11 @@
+const fs=require('fs'),assert=require('assert');
+const app=fs.readFileSync('app.js','utf8');
+const creator=fs.readFileSync('task-creator.js','utf8');
+const css=fs.readFileSync('style.css','utf8');
+assert(app.includes("assignmentSource='completion'"));
+assert(app.includes("state.assignmentSource==='completion'"));
+assert(app.includes("assignmentOverride:true"));
+assert(app.includes("hold-assign-progress"));
+assert(creator.includes('task-name-input'));
+assert(css.includes('@keyframes holdAssignFill'));
+console.log('Interaction regression tests passed.');

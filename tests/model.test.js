@@ -9,4 +9,8 @@ const shower=m.normalizeTask({id:'task-days-personal-take-a-shower',schedule:{ty
 const privateState=m.normalizeOccurrence({assignedIds:[],isDone:false},shower);assert.deepStrictEqual([...privateState.assignedIds],['person-001']);
 const state=m.normalizeOccurrence({assignedToId:'person-003',isDone:true,completedById:'person-003'},migrated);assert.deepStrictEqual([...state.assignedIds],['person-003']);assert.equal(state.isDone,true);
 assert.equal(m.canEditTask(context.people[2],{createdById:'person-003'}),true);assert.equal(m.canEditTask(context.people[1],{createdById:'person-003'}),false);assert.equal(m.canEditTask(context.people[0],{createdById:'person-003'}),true);
+
+const assignedDefault=m.normalizeTask({id:'assigned',schedule:{type:'days',days:[1]},defaultAssignedIds:['person-001']});
+const temporaryUnassigned=m.normalizeOccurrence({assignedIds:[],assignmentOverride:true,assignmentType:'temporary'},assignedDefault);assert.deepStrictEqual([...temporaryUnassigned.assignedIds],[]);assert.equal(temporaryUnassigned.assignmentOverride,true);
+const defaultOccurrence=m.normalizeOccurrence({},assignedDefault);assert.deepStrictEqual([...defaultOccurrence.assignedIds],['person-001']);
 console.log('Task model tests passed.');

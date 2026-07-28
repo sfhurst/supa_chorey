@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.2
+
+### Fixed
+- Unassigned tasks completed by a user temporarily appear on that user's list, then return to Unassigned when the completion is unchecked.
+- Owner/Admin can tap Unassigned for a temporary unassignment or hold it for a permanent unassignment.
+- Task-name entry now matches the size, spacing, and visual weight of Chorey task buttons.
+- Long-press assignment now fills the selected person's button using that person's color.
+
 ## v0.8.1
 
 ### Fixed

@@ -42,10 +42,13 @@ const ChoreyTaskModel = (() => {
     const state = clone(input || {});
     const legacyAssigned = state.assignedToId ? [state.assignedToId] : [];
     const defaults = task?.visibility === "private" ? [task.createdById] : task?.defaultAssignedIds || [];
-    const assignedIds = uniquePeople(state.assignedIds || legacyAssigned || defaults);
+    const suppliedAssignedIds = uniquePeople(state.assignedIds || legacyAssigned);
+    const hasAssignmentOverride = state.assignmentOverride === true;
+    const assignedIds = hasAssignmentOverride ? suppliedAssignedIds : (suppliedAssignedIds.length ? suppliedAssignedIds : uniquePeople(defaults));
     const normalized = {
       ...state,
-      assignedIds: assignedIds.length ? assignedIds : uniquePeople(defaults),
+      assignedIds,
+      assignmentOverride: hasAssignmentOverride,
       assignedById: state.assignedById || null,
       assignmentType: state.assignmentType || (state.assignedByAdmin ? "temporary" : null),
       selfAssignedIds: uniquePeople(state.selfAssignedIds || (state.assignedByCompletion && state.completedById ? [state.completedById] : [])),

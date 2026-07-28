@@ -1,1 +1,1 @@
-const CHOREY_APP_VERSION = "0.8.1";
+const CHOREY_APP_VERSION = "0.8.2";
