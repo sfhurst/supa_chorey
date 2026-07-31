@@ -1,6 +1,19 @@
 # Changelog
 
-## v0.8.4
+## v0.8.5
+
+### Added
+- Added persistent per-user view modes under `settings.viewModeByUserId` in local storage schema version 9.
+- Added one role-aware bottom button that cycles through the views appropriate to each profile.
+
+### Changed
+- Users start with only their due tasks, can add unassigned due tasks, then reveal their completed tasks without hiding unassigned work.
+- Admins start with only their due tasks, can expand to all household due tasks, then reveal household completed tasks.
+- Owners start with all household due tasks with completed rows hidden, can reveal completed rows, then open the full task library for editing.
+- Contribution counts remain based on the full section assignment count even when completed rows are hidden.
+- User congratulations now evaluate only that user’s assigned due tasks; Admin and Owner congratulations continue to evaluate household due tasks.
+
+## v0.8.5
 
 ### Fixed
 - Restored task sorting within each section to completion status first, then category A–Z, then task name A–Z.

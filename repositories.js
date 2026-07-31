@@ -84,8 +84,8 @@ const ChoreyRepositories = (() => {
 
   const dailyRepository = Object.freeze({
     async prepare(key) { return ChoreyStorage.prepareDate(key); },
-    async getCongratulationsShown() { return ChoreyStorage.getCongratulationsShown(); },
-    async setCongratulationsShown(value) { return ChoreyStorage.setCongratulationsShown(value); },
+    async getCongratulationsShown(personId) { return ChoreyStorage.getCongratulationsShown(personId); },
+    async setCongratulationsShown(personId, value) { return ChoreyStorage.setCongratulationsShown(personId, value); },
   });
   return Object.freeze({ profileRepository, taskRepository, occurrenceRepository, dailyRepository });
 })();
