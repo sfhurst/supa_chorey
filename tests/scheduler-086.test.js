@@ -1,0 +1,16 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const context={console};vm.createContext(context);
+vm.runInContext('const ChoreyUtils={dateKey:d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`};',context);
+vm.runInContext(fs.readFileSync('scheduler.js','utf8')+'\nthis.scheduler=ChoreyScheduler;',context);
+const s=context.scheduler,person={id:'p1'},task=schedule=>({id:'t',name:'T',category:'T',active:true,visibility:'visible',schedule});
+const occ=(schedule,date)=>s.buildDayData([task(schedule)],person,new Date(date+'T12:00:00')).occurrences[0]?.occurrence||null;
+assert(occ({type:'anytime',repeats:false},'2026-08-01'));
+assert(occ({type:'days',repeats:false,days:[1],months:[],oneTimeKeys:['2026-08-03']},'2026-08-03'));
+assert.equal(occ({type:'days',repeats:false,days:[1],months:[],oneTimeKeys:['2026-08-03']},'2026-08-10'),null);
+assert(occ({type:'weeks',repeats:true,weeks:[2,4],months:[]},'2026-08-03'));
+assert(occ({type:'months',repeats:false,months:[9],oneTimeKeys:['2026-09']},'2026-09-15'));
+assert.equal(occ({type:'months',repeats:false,months:[9],oneTimeKeys:['2026-09']},'2027-09-15'),null);
+assert(occ({type:'dates',repeats:true,dateRule:{kind:'specific',month:8,day:14},oneTimeKeys:[]},'2027-08-14'));
+assert(occ({type:'dates',repeats:true,dateRule:{kind:'pattern',ordinal:2,weekday:5,months:[8]},oneTimeKeys:[]},'2026-08-14'));
+assert.equal(occ({type:'dates',repeats:true,dateRule:{kind:'pattern',ordinal:2,weekday:5,months:[8]},oneTimeKeys:[]},'2026-09-11'),null);
+console.log('v0.8.6 scheduler tests passed.');

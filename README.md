@@ -52,3 +52,6 @@ Run `SUPABASE_SETUP.sql` in the Supabase SQL Editor. The final commented `cron.s
 - `ui.js` — rendering
 - `task-creator.js` — task creation and editing
 - `PHILOSOPHY.md` — product principles
+
+## Scheduler vocabulary (v0.8.6)
+Task creation asks where a task **occurs**: Days, Weeks, Months, Dates, or Anytime. Day-, week-, month-, and date-based schedules may either repeat or run one time. Existing v0.8.5 Indefinite and Once tasks are migrated automatically when loaded.

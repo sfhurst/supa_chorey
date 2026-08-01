@@ -11,6 +11,7 @@ const ChoreyApp = (() => {
   let congrats = false;
   let lastViewportMarkup = null;
   let lastViewportView = null;
+  let resumeRefreshTimer = null;
 
   async function active() {
     return getPerson(await profileRepository.getActivePersonId());
@@ -492,10 +493,13 @@ const ChoreyApp = (() => {
     await init();
   });
 
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && !document.querySelector(".assignment-overlay")) init({ background: true });
-  });
-  window.addEventListener("focus", () => init({ background: true }));
+  function scheduleResumeRefresh() {
+    if (document.hidden || document.querySelector(".assignment-overlay")) return;
+    clearTimeout(resumeRefreshTimer);
+    resumeRefreshTimer = setTimeout(() => init({ background: true }), 250);
+  }
+  document.addEventListener("visibilitychange", scheduleResumeRefresh);
+  window.addEventListener("focus", scheduleResumeRefresh);
   setInterval(() => {
     if (!document.hidden && !document.querySelector(".assignment-overlay")) init({ background: true });
   }, POLL);

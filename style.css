@@ -728,3 +728,26 @@ input,textarea{user-select:text;-webkit-user-select:text;}
   display: grid;
   gap: 8px;
 }
+
+/* v0.8.6 task-creation consistency */
+.task-creator { gap: 14px; }
+.task-creator .modal-form { display:flex; flex-direction:column; gap:14px; margin:0; }
+.task-creator .modal-control,
+.task-creator .selector-check,
+.task-creator .chore-item { min-height:50px; border-radius:8px; }
+.task-creator .selector-list { gap:8px; }
+.task-creator .selector-check { padding:12px 14px; border-left:4px solid transparent; }
+.task-creator .selector-check.current-selection { border-color:var(--accent); }
+.task-creator .selector-check .chore-checkbox { margin:0; }
+.task-creator .selector-row.current-selection { border-color:var(--accent); }
+.task-creator .repeat-toggle { width:100%; border:1px solid var(--border-color); border-radius:8px; padding:13px 16px; background:var(--card-bg); color:var(--text-main); font:inherit; font-weight:700; cursor:pointer; }
+.task-creator .repeat-toggle.selected { background:var(--accent); border-color:var(--accent); color:#fff; }
+.task-creator .schedule-summary { cursor:default; }
+.task-creator .selector-scroll { max-height:58vh; overflow:auto; }
+.task-creator .category-selector-list .chore-item { border-left:4px solid var(--category-accent,var(--cat-default)); }
+.task-creator .category-selector-list [data-new-category] { border-left-color:var(--border-color); }
+.task-creator .field-label { gap:8px; }
+.task-creator .text-input,
+.task-creator .primary-button,
+.task-creator .modal-cancel,
+.task-creator .private-task-button { margin:0; }

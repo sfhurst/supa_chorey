@@ -13,3 +13,5 @@ assert(html.indexOf('Alpha') < html.indexOf('Beta'));
 assert(html.indexOf('Beta') < html.indexOf('Z open'));
 assert(html.indexOf('Z open') < html.indexOf('A done'));
 console.log('UI regression tests passed.');
+const emptyHtml=context.ui.renderBoard(people[0],{dateKey:'2026-07-28'},new Map([['steve',[]]]));
+assert.equal(emptyHtml.includes('No tasks here'),false);

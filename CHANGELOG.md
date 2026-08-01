@@ -79,3 +79,13 @@
 - Migrates legacy visibility objects to `visible` or `private`.
 - Migrates Shower and Groom defaults to private tasks owned by Steve.
 - Added optional nightly cleanup for expired Once tasks and completed prior-day Indefinite tasks.
+
+## 0.8.6
+- Reframed task scheduling as **Occurs on these…**: Days, Weeks, Months, Dates, or Anytime.
+- Added a `repeats` boolean so day-, week-, month-, and date-based schedules can be recurring or one-time.
+- Added specific dates and ordinal weekday patterns, including selected-month seasonal patterns.
+- Days, Weeks, and Months now share the same multi-select checkbox behavior.
+- Standardized task-creation controls, spacing, padding, buttons, toggles, and text inputs.
+- Category choices now display the same category-colored left border used in the task list.
+- Removed “No tasks here” rows and their spacing beneath user contribution headings.
+- Debounced resume/focus synchronization to avoid duplicate unchanged screen refreshes.

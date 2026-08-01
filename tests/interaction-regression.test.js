@@ -25,3 +25,8 @@ assert(app.includes('scope: "mine-unassigned"'));
 assert(app.includes('scope: "household"'));
 assert(app.includes('item.task.visibility !== "private"'));
 assert(app.includes('(item.assignedIds || []).includes(person.id)'));
+assert(creator.includes('Occurs on these…'));
+assert(creator.includes('["dates","Dates"]'));
+assert(creator.includes('data-repeat'));
+assert(creator.includes('ChoreyUI.categoryColor(c)'));
+assert(app.includes('scheduleResumeRefresh'));
