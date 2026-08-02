@@ -1,4 +1,4 @@
-# Chorey 0.8.0
+# Chorey 0.8.7
 
 Chorey is a Supabase-backed household task manager built around one idea: **help, never hurt**.
 
@@ -55,3 +55,8 @@ Run `SUPABASE_SETUP.sql` in the Supabase SQL Editor. The final commented `cron.s
 
 ## Scheduler vocabulary (v0.8.6)
 Task creation asks where a task **occurs**: Days, Weeks, Months, Dates, or Anytime. Day-, week-, month-, and date-based schedules may either repeat or run one time. Existing v0.8.5 Indefinite and Once tasks are migrated automatically when loaded.
+
+## Stability over activity
+
+Chorey never visibly refreshes merely because the app was opened, resumed, reconnected, or polled. If the same day, user, view, and normalized task state are already displayed, the application performs no visible UI work. This is a core design principle, not a performance optimization.
+

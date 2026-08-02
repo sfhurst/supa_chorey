@@ -48,3 +48,11 @@ Clearing the browser's site data remains a true factory reset. It removes custom
 ## Identity and versioning release
 
 Version 0.6.0 adds the Chorey house/checklist icon set, web manifest, cache-busted static references, and an app-version constant that remains independent of storage schema version 5.
+
+## Permanent render invariant
+
+The visible interface must not be touched when the displayed state is unchanged. Resume, focus, reconnect, and polling paths must compute and compare the complete normalized application-state signature before calling any header, viewport, swipe, banner, or scroll-changing operation.
+
+**Invariant:** same day + same user + same view + same normalized task state = no visible UI work.
+
+Any future change that bypasses this guard is a regression, even if the resulting markup appears identical.

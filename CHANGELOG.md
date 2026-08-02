@@ -89,3 +89,13 @@
 - Category choices now display the same category-colored left border used in the task list.
 - Removed “No tasks here” rows and their spacing beneath user contribution headings.
 - Debounced resume/focus synchronization to avoid duplicate unchanged screen refreshes.
+
+## 0.8.7
+
+- Established **Stability over activity** as a permanent Chorey product and architecture principle.
+- Documented and enforced: same day + same user + same view + same normalized task state = do nothing.
+- Added a permanent source-level render guard warning and a regression test so future changes cannot silently restore unnecessary visible refreshes.
+- Added a full application-state signature before all visible rendering work.
+- Same day + same task/state data + same view now exits without touching the header, viewport, swipe state, or scroll position.
+- Background resume, focus, and polling failures no longer replace or modify an already valid screen.
+- Kept background Supabase reads so changes from other devices still appear when the underlying data actually changes.

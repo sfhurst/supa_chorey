@@ -12,6 +12,25 @@ const ChoreyApp = (() => {
   let lastViewportMarkup = null;
   let lastViewportView = null;
   let resumeRefreshTimer = null;
+  let lastAppliedStateSignature = null;
+
+  function stableValue(value) {
+    if (Array.isArray(value)) return value.map(stableValue);
+    if (!value || typeof value !== "object") return value;
+    return Object.fromEntries(Object.keys(value).sort().map(key => [key, stableValue(value[key])]));
+  }
+
+  function stateSignature({ person, tasks, states, day, congratulationsShown }) {
+    return JSON.stringify(stableValue({
+      personId: person?.id || null,
+      currentView,
+      viewMode: person ? getViewMode(person) : null,
+      dateKey: day.dateKey,
+      tasks,
+      states,
+      congratulationsShown: Boolean(congratulationsShown),
+    }));
+  }
 
   async function active() {
     return getPerson(await profileRepository.getActivePersonId());
@@ -92,29 +111,59 @@ const ChoreyApp = (() => {
     refreshing = true;
     try {
       const person = await active();
+      if (!person) currentView = "today";
       const tasks = await loadTasks();
       const day = ChoreyScheduler.buildDayData(tasks, person, ChoreyClock.now());
       const states = await occurrenceRepository.getAll(tasks);
+      await dailyRepository.prepare(day.dateKey);
+      const congratulationsShown = person ? await dailyRepository.getCongratulationsShown(person.id) : false;
+      const nextSignature = stateSignature({ person, tasks, states, day, congratulationsShown });
+
+      /*
+       * CHOREY STABILITY RULE — STOP BEFORE RENDERING
+       *
+       * Opening the app, resuming from the background, reconnecting, or polling
+       * must never cause a visible refresh unless the displayed application state
+       * has meaningfully changed.
+       *
+       * Same day + same user + same view + same normalized task state = DO NOTHING.
+       *
+       * Do not update the header. Do not rebuild the DOM. Do not reset swipe state.
+       * Do not move the scroll position. Do not flash a loading or connection state.
+       *
+       * This is a core Chorey philosophy, not a performance optimization.
+       */
+      if (lastAppliedStateSignature === nextSignature) return;
+
       currentTasks = tasks;
       currentStates = states;
       activeDayData = { ...day, occurrences: visibleOccurrences(day, states) };
-      await dailyRepository.prepare(day.dateKey);
-      congrats = person ? await dailyRepository.getCongratulationsShown(person.id) : false;
+      congrats = congratulationsShown;
+      lastAppliedStateSignature = nextSignature;
+
       banner();
       ChoreyUI.updateHeader(person, () => ChoreyTaskCreator.open(person, refresh), {
         title: currentView === "all" ? "All Tasks" : undefined,
       });
       if (!person) {
-        currentView = "today";
         renderLogin();
         return;
       }
       if (currentView === "all") renderAll(person);
-      else renderToday(person);
+      else await renderToday(person);
+
+      // Rendering can legitimately update local congratulations state. Keep the
+      // applied signature synchronized so the next unchanged resume is still a
+      // true no-op.
+      lastAppliedStateSignature = stateSignature({
+        person, tasks, states, day, congratulationsShown: congrats,
+      });
     } catch (error) {
       console.error(error);
+      // A background resume/poll failure must not disturb a valid screen.
+      if (background) return;
       banner("Shared chores are unavailable. Check the connection and try again.");
-      if (!background && !document.getElementById("app-viewport").innerHTML.trim()) {
+      if (!document.getElementById("app-viewport").innerHTML.trim()) {
         document.getElementById("app-viewport").innerHTML = '<div class="connection-empty">Shared chores unavailable</div>';
       }
     } finally {
