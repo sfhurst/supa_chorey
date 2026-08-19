@@ -1,4 +1,4 @@
-# Chorey 0.8.7
+# Chorey 0.8.8
 
 Chorey is a Supabase-backed household task manager built around one idea: **help, never hurt**.
 
@@ -60,3 +60,6 @@ Task creation asks where a task **occurs**: Days, Weeks, Months, Dates, or Anyti
 
 Chorey never visibly refreshes merely because the app was opened, resumed, reconnected, or polled. If the same day, user, view, and normalized task state are already displayed, the application performs no visible UI work. This is a core design principle, not a performance optimization.
 
+
+## Blank-screen recovery
+Chorey never treats matching data as proof that the screen is healthy. The no-change guard also verifies that the expected viewport is still present and matches the last successful render. If iOS or the browser leaves the viewport empty, Chorey immediately restores the last known-good markup and performs a safe rebind. A state signature is recorded only after rendering completes successfully.

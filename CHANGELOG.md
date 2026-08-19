@@ -1,3 +1,11 @@
+
+## 0.8.8
+
+- Fixed a blank-screen failure where Chorey marked data as rendered before the render completed.
+- The unchanged-state guard now requires both matching application state and an intact expected viewport.
+- If the browser or iOS leaves the viewport empty, Chorey immediately restores the last known-good screen before background synchronization finishes.
+- Render state is now committed only after the viewport is successfully rendered. A failed render can no longer poison later refreshes into doing nothing.
+
 # Changelog
 
 ## v0.8.5

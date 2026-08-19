@@ -3,8 +3,8 @@ const assert = require('assert');
 const source = fs.readFileSync('app.js', 'utf8');
 
 assert(source.includes('lastAppliedStateSignature'), 'state signature cache is missing');
-assert(source.includes('if (lastAppliedStateSignature === nextSignature) return;'), 'unchanged state must exit before rendering');
-const guard = source.indexOf('if (lastAppliedStateSignature === nextSignature) return;');
+assert(source.includes('if (lastAppliedStateSignature === nextSignature && viewportIsIntact(person)) return;'), 'unchanged intact state must exit before rendering');
+const guard = source.indexOf('if (lastAppliedStateSignature === nextSignature && viewportIsIntact(person)) return;');
 assert(guard < source.indexOf('ChoreyUI.updateHeader', guard), 'guard must run before header updates');
 assert(guard < source.indexOf('renderToday(person)', guard), 'guard must run before viewport rendering');
 assert(source.includes('if (background) return;'), 'background failures must leave the displayed screen alone');

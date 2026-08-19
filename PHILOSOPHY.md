@@ -17,3 +17,6 @@ A visible update is justified only when the displayed state meaningfully changes
 **Same day + same user + same view + same normalized task state = do nothing.**
 
 This is a core product principle, not a performance optimization.
+
+### Stability includes recovery
+“Do nothing” applies only while the existing screen is intact. A blank or damaged viewport is itself a meaningful visible change and must be repaired immediately from the last known-good screen. Chorey must never preserve a blank screen merely because the underlying data has not changed.

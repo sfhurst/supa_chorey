@@ -56,3 +56,6 @@ The visible interface must not be touched when the displayed state is unchanged.
 **Invariant:** same day + same user + same view + same normalized task state = no visible UI work.
 
 Any future change that bypasses this guard is a regression, even if the resulting markup appears identical.
+
+## Viewport integrity invariant
+A matching state signature is not sufficient to skip rendering. The expected viewport must also be present and equal to the last successful markup. Never commit `lastAppliedStateSignature` before the render path completes. If the viewport is unexpectedly empty, restore the last known-good markup immediately and force a safe render/rebind pass.

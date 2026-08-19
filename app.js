@@ -14,6 +14,29 @@ const ChoreyApp = (() => {
   let resumeRefreshTimer = null;
   let lastAppliedStateSignature = null;
 
+  function expectedViewportView(person) {
+    if (!person) return "login";
+    return currentView === "all" ? "all" : "today";
+  }
+
+  function viewportIsIntact(person) {
+    const viewport = document.getElementById("app-viewport");
+    if (!viewport || !viewport.innerHTML.trim()) return false;
+    const expected = expectedViewportView(person);
+    if (lastViewportView !== expected) return false;
+    if (expected === "login") return Boolean(viewport.querySelector("[data-person-id]"));
+    return Boolean(lastViewportMarkup) && viewport.innerHTML === lastViewportMarkup;
+  }
+
+  function restoreCachedViewportIfBlank() {
+    const viewport = document.getElementById("app-viewport");
+    if (!viewport || viewport.innerHTML.trim() || !lastViewportMarkup) return;
+    // Restore the last known-good screen immediately. The following render pass
+    // will rebind handlers without ever showing the user an empty viewport.
+    viewport.innerHTML = lastViewportMarkup;
+    lastViewportView = null;
+  }
+
   function stableValue(value) {
     if (Array.isArray(value)) return value.map(stableValue);
     if (!value || typeof value !== "object") return value;
@@ -107,6 +130,7 @@ const ChoreyApp = (() => {
   }
 
   async function init({ background = false } = {}) {
+    restoreCachedViewportIfBlank();
     if (refreshing) return;
     refreshing = true;
     try {
@@ -133,13 +157,12 @@ const ChoreyApp = (() => {
        *
        * This is a core Chorey philosophy, not a performance optimization.
        */
-      if (lastAppliedStateSignature === nextSignature) return;
+      if (lastAppliedStateSignature === nextSignature && viewportIsIntact(person)) return;
 
       currentTasks = tasks;
       currentStates = states;
       activeDayData = { ...day, occurrences: visibleOccurrences(day, states) };
       congrats = congratulationsShown;
-      lastAppliedStateSignature = nextSignature;
 
       banner();
       ChoreyUI.updateHeader(person, () => ChoreyTaskCreator.open(person, refresh), {
@@ -544,6 +567,7 @@ const ChoreyApp = (() => {
 
   function scheduleResumeRefresh() {
     if (document.hidden || document.querySelector(".assignment-overlay")) return;
+    restoreCachedViewportIfBlank();
     clearTimeout(resumeRefreshTimer);
     resumeRefreshTimer = setTimeout(() => init({ background: true }), 250);
   }
